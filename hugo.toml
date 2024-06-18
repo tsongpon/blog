@@ -1,6 +1,6 @@
-baseURL = 'https://example.org/'
+baseURL = 'https://blog.songpon.io/'
 languageCode = 'en-us'
-title = 'My New Hugo Site'
+title = 'Songpon Blog'
 theme = 'archie'
 
 # Main menu Items
