@@ -2,6 +2,7 @@ baseURL = 'https://blog.songpon.io/'
 languageCode = 'en-us'
 title = 'Songpon Blog'
 theme = 'archie'
+enableEmoji = true
 
 # Main menu Items
 

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html><head lang="en"><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>Container Orchestration with Dokcer Swarm - Songpon Blog</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Docker Swarm อีกหนึ่งทางเลือกของคนที่อยากมี self-hosted container orchestration platform ไว้ใช้ แต่ไม่อยากจะใช้ Kubernetes ซึ่งมีความซับซ้อน และมี learning curve ที่ค่อนข้างสูงในการ setup และการ operate cluster" />
+	<meta property="og:image" content=""/>
+	<meta property="og:url" content="http://localhost:1313/posts/docker-swarm/">
+  <meta property="og:site_name" content="Songpon Blog">
+  <meta property="og:title" content="Container Orchestration with Dokcer Swarm">
+  <meta property="og:description" content="Docker Swarm อีกหนึ่งทางเลือกของคนที่อยากมี self-hosted container orchestration platform ไว้ใช้ แต่ไม่อยากจะใช้ Kubernetes ซึ่งมีความซับซ้อน และมี learning curve ที่ค่อนข้างสูงในการ setup และการ operate cluster">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2024-06-19T00:00:00+00:00">
+    <meta property="article:modified_time" content="2024-06-19T00:00:00+00:00">
+    <meta property="article:tag" content="Docker">
+    <meta property="article:tag" content="Container">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Container Orchestration with Dokcer Swarm">
+  <meta name="twitter:description" content="Docker Swarm อีกหนึ่งทางเลือกของคนที่อยากมี self-hosted container orchestration platform ไว้ใช้ แต่ไม่อยากจะใช้ Kubernetes ซึ่งมีความซับซ้อน และมี learning curve ที่ค่อนข้างสูงในการ setup และการ operate cluster">
+
+	
+        <link href="http://localhost:1313/css/fonts.2c2227b81b1970a03e760aa2e6121cd01f87c88586803cbb282aa224720a765f.css" rel="stylesheet">
+	
+
+	
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.ac08a4c9714baa859217f92f051deb58df2938ec352b506df655005dcaf98cc0.css" />
+
+	
+	
+
+	
+	
+	
+	
+</head>
+<body>
+        <div class="content"><header>
+	<div class="main">
+		<a href="http://localhost:1313/">Songpon Blog</a>
+	</div>
+	<nav>
+		
+		<a href="/">Home</a>
+		
+		<a href="/posts">All posts</a>
+		
+		<a href="/tags">Tags</a>
+		
+		
+	</nav>
+</header>
+
+<main>
+	<article>
+		<div class="title">
+			<h1 class="title">Container Orchestration with Dokcer Swarm</h1>
+			<div class="meta">Posted on Jun 19, 2024</div>
+		</div>
+		
+
+		<section class="body">
+			<p>Docker Swarm อีกหนึ่งทางเลือกของคนที่อยากมี self-hosted container orchestration platform ไว้ใช้ แต่ไม่อยากจะใช้ Kubernetes ซึ่งมีความซับซ้อน และมี learning curve ที่ค่อนข้างสูงในการ setup และการ operate cluster</p>
+<p>ถึงแม้ swarm จะไม่ได้มี feature หรูหรา เทียบเท่า Kubernetes แต่สำหรับทีมขนาดเล็ก และขนาดกลางที่ต้องการเพียงแค่ฟังก์ชั่นพื้นฐานของ container orchestration platform ก็คิดว่าน่าจะเพียงพอกับการใช้งาน</p>
+<h1 id="setup-docker-swarm-cluster">Setup Docker Swarm Cluster</h1>
+<p>Requirements</p>
+<ol>
+<li>Linux host 3 เครื่อง (ในที่นี้จะใช้ RedHat 9 Linux ที่มี IP เป็น 10.0.12.137, 10.0.9.198, 10.0.10.73)</li>
+<li>ทั้งสามเครื่องจะต้องเปิด port 2377 (TCP), 7946 (TCP/UDP) และ 4789 (UDT)</li>
+</ol>
+<p>Create cluster</p>
+<p><strong>ที่เครื่อง <code>10.0.12.137</code> (manager node)</strong></p>
+<ol>
+<li>Install Docker</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e">#add repository</span>
+</span></span><span style="display:flex;"><span>sudo yum install -y yum-utils
+</span></span><span style="display:flex;"><span>sudo yum-config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#Install docker\</span>
+</span></span><span style="display:flex;"><span>sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#Start docker</span>
+</span></span><span style="display:flex;"><span>sudo systemctl start docker
+</span></span></code></pre></div><ol start="2">
+<li>Initial swarm cluster</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo docker swarm init --advertise-addr 10.0.12.137
+</span></span></code></pre></div><p>จะได้ output ออกมาประมาณนี้</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>Swarm initialized: current node <span style="color:#f92672">(</span>hw5dhqf842lkookic1lpt7z4y<span style="color:#f92672">)</span> is now a manager.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>To add a worker to this swarm, run the following command:
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    docker swarm join --token SWMTKN-1-0wecnrittwmr862fzm9h54aoipv24egam1ap5wsbbw34hvl0k7-07lm7ktxvhy5r6xq15mydyjxp 10.0.12.137:2377
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>To add a manager to this swarm, run <span style="color:#e6db74">&#39;docker swarm join-token manager&#39;</span> and follow the instructions.
+</span></span></code></pre></div><p>จาก output เราจะได้คำสั่งสำหรับ join cluster ทีจะเอาไปรันในเครื่อง worker node</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>docker swarm join --token SWMTKN-1-0wecnrittwmr862fzm9h54aoipv24egam1ap5wsbbw34hvl0k7-07lm7ktxvhy5r6xq15mydyjxp 10.0.12.137:2377
+</span></span></code></pre></div><p><strong>ที่เครื่อง <code>10.0.9.198</code> (worker node1)</strong></p>
+<ol>
+<li>Install Docker</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e">#add repository</span>
+</span></span><span style="display:flex;"><span>sudo yum install -y yum-utils
+</span></span><span style="display:flex;"><span>sudo yum-config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#Install docker\</span>
+</span></span><span style="display:flex;"><span>sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#Start docker</span>
+</span></span><span style="display:flex;"><span>sudo systemctl start docker
+</span></span></code></pre></div><ol start="2">
+<li>รันคำสั่ง join cluster ที่ได้จากการ initial cluster จาก master node</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo docker swarm join --token SWMTKN-1-0wecnrittwmr862fzm9h54aoipv24egam1ap5wsbbw34hvl0k7-07lm7ktxvhy5r6xq15mydyjxp 10.0.12.137:2377
+</span></span></code></pre></div><p><strong>ที่เครื่อง <code>10.0.10.73</code> (worker node2)</strong></p>
+<ol>
+<li>Install Docker</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e">#add repository</span>
+</span></span><span style="display:flex;"><span>sudo yum install -y yum-utils
+</span></span><span style="display:flex;"><span>sudo yum-config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#Install docker\</span>
+</span></span><span style="display:flex;"><span>sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#Start docker</span>
+</span></span><span style="display:flex;"><span>sudo systemctl start docker
+</span></span></code></pre></div><ol start="2">
+<li>รันคำสั่ง join cluster ที่ได้จากการ initial cluster จาก master node</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo docker swarm join --token SWMTKN-1-0wecnrittwmr862fzm9h54aoipv24egam1ap5wsbbw34hvl0k7-07lm7ktxvhy5r6xq15mydyjxp 10.0.12.137:2377
+</span></span></code></pre></div><p>เสร็จแล้วกลับไปที่ master node เพื่อดูสถานะของ cluster ที่เราเพิ่งสร้าง</p>
+<p><strong>ที่เครื่อง <code>10.0.12.137</code> (manager node)</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#f92672">[</span>ec2-user@ip-10-0-12-137 ~<span style="color:#f92672">]</span>$ sudo docker node ls
+</span></span><span style="display:flex;"><span>ID                            HOSTNAME                                         STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+</span></span><span style="display:flex;"><span>lc1sjgj9e94wah0rpvtenzwqx     ip-10-0-9-198.ap-southeast-1.compute.internal    Ready     Active                          26.1.4
+</span></span><span style="display:flex;"><span>2yd6b27g1n0jhcsrgeq16qzan     ip-10-0-10-73.ap-southeast-1.compute.internal    Ready     Active                          26.1.4
+</span></span><span style="display:flex;"><span>hw5dhqf842lkookic1lpt7z4y *   ip-10-0-12-137.ap-southeast-1.compute.internal   Ready     Active         Leader           26.1.4
+</span></span></code></pre></div><p>ตอนนี้เราได้ Docker Swarm ไว้ใช้งานแล้ว</p>
+<h1 id="ทดลอง-deploy-service">ทดลอง deploy service</h1>
+<p>deploy Nginx ไปที่ cluster และ expose service ที่ port 80</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo docker service create --name web --replicas <span style="color:#ae81ff">3</span> --publish published<span style="color:#f92672">=</span>80,target<span style="color:#f92672">=</span><span style="color:#ae81ff">80</span> nginx:latest
+</span></span></code></pre></div><p>ลอง list service ดูด้วยคำสั้ง</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#f92672">[</span>ec2-user@ip-10-0-12-137 ~<span style="color:#f92672">]</span>$ sudo docker service ls
+</span></span><span style="display:flex;"><span>ID             NAME      MODE         REPLICAS   IMAGE          PORTS
+</span></span><span style="display:flex;"><span>zi2xd9yvuimr   web       replicated   3/3        nginx:latest   *:80-&gt;80/tcp
+</span></span></code></pre></div><p>ทดลองเรียก service</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#f92672">[</span>ec2-user@ip-10-0-12-137 ~<span style="color:#f92672">]</span>$ curl 10.0.12.137
+</span></span><span style="display:flex;"><span>&lt;!DOCTYPE html&gt;
+</span></span><span style="display:flex;"><span>&lt;html&gt;
+</span></span><span style="display:flex;"><span>&lt;head&gt;
+</span></span><span style="display:flex;"><span>&lt;title&gt;Welcome to nginx!&lt;/title&gt;
+</span></span><span style="display:flex;"><span>&lt;style&gt;
+</span></span><span style="display:flex;"><span>html <span style="color:#f92672">{</span> color-scheme: light dark; <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>body <span style="color:#f92672">{</span> width: 35em; margin: <span style="color:#ae81ff">0</span> auto;
+</span></span><span style="display:flex;"><span>font-family: Tahoma, Verdana, Arial, sans-serif; <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>&lt;/style&gt;
+</span></span><span style="display:flex;"><span>&lt;/head&gt;
+</span></span><span style="display:flex;"><span>&lt;body&gt;
+</span></span><span style="display:flex;"><span>&lt;h1&gt;Welcome to nginx!&lt;/h1&gt;
+</span></span><span style="display:flex;"><span>&lt;p&gt;If you see this page, the nginx web server is successfully installed and
+</span></span><span style="display:flex;"><span>working. Further configuration is required.&lt;/p&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>&lt;p&gt;For online documentation and support please refer to
+</span></span><span style="display:flex;"><span>&lt;a href<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;http://nginx.org/&#34;</span>&gt;nginx.org&lt;/a&gt;.&lt;br/&gt;
+</span></span><span style="display:flex;"><span>Commercial support is available at
+</span></span><span style="display:flex;"><span>&lt;a href<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;http://nginx.com/&#34;</span>&gt;nginx.com&lt;/a&gt;.&lt;/p&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>&lt;p&gt;&lt;em&gt;Thank you <span style="color:#66d9ef">for</span> using nginx.&lt;/em&gt;&lt;/p&gt;
+</span></span><span style="display:flex;"><span>&lt;/body&gt;
+</span></span><span style="display:flex;"><span>&lt;/html&gt;
+</span></span></code></pre></div><p>servive up and running &#x1f603;</p>
+
+		</section>
+
+		<div class="post-tags">
+			
+			
+			<nav class="nav tags">
+				<ul class="tags">
+					
+					<li><a href="/tags/docker">docker</a></li>
+					
+					<li><a href="/tags/container">container</a></li>
+					
+				</ul>
+			</nav>
+			
+			
+		</div>
+		</article>
+</main>
+<footer>
+  <div style="display:flex"></div>
+  <div class="footer-info">
+    2024  <a
+      href="https://github.com/athul/archie">Archie Theme</a> | Built with <a href="https://gohugo.io">Hugo</a>
+  </div>
+</footer>
+</div>
+    </body>
+</html>
