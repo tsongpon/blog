@@ -111,7 +111,7 @@ lc1sjgj9e94wah0rpvtenzwqx     ip-10-0-9-198.ap-southeast-1.compute.internal    R
 hw5dhqf842lkookic1lpt7z4y *   ip-10-0-12-137.ap-southeast-1.compute.internal   Ready     Active         Leader           26.1.4
 ```
 
-ตอนนี้เราได้ Docker Swarm ไว้ใช้งานแล้ว
+ตอนนี้เราได้ Docker Swarm cluster ไว้ใช้งานแล้ว
 
 # ทดลอง deploy service
 
