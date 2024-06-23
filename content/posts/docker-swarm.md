@@ -158,4 +158,4 @@ Commercial support is available at
 </html>
 ```
 
-servive up and running :smiley:
+service up and running :smiley:
