@@ -1,5 +1,5 @@
 ---
-title: Container Orchestration with Dokcer Swarm
+title: Container Orchestration with Docker Swarm
 description: Docker Swarm อีกหนึ่งทางเลือกของคนที่อยากมี self-hosted container orchestration platform ไว้ใช้ แต่ไม่อยากจะใช้ Kubernetes ซึ่งมีความซับซ้อน และมี learning curve ที่ค่อนข้างสูงในการ setup และการ operate cluster
 date: 2024-06-19
 draft: false
