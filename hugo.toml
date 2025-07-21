@@ -1,4 +1,4 @@
-baseURL = 'https://blog.songpon.io/'
+baseURL = 'https://blog.abc-tech.co/'
 languageCode = 'en-us'
 title = 'Songpon Blog'
 theme = 'archie'
