@@ -18,7 +18,7 @@ Requirements
 
 Create cluster
 
-**ที่เครื่อง `10.0.12.137` (manager node)**
+**ที่เครื่อง `10.0.12.137` (node-1)**
 
 1. Install Docker
 ```bash
@@ -57,7 +57,7 @@ To add a manager to this swarm, run 'docker swarm join-token manager' and follow
 docker swarm join --token SWMTKN-1-0wecnrittwmr862fzm9h54aoipv24egam1ap5wsbbw34hvl0k7-07lm7ktxvhy5r6xq15mydyjxp 10.0.12.137:2377
 ```
 
-**ที่เครื่อง `10.0.9.198` (worker node1)**
+**ที่เครื่อง `10.0.9.198` (node-2)**
 1. Install Docker
 
 ```bash
@@ -78,7 +78,7 @@ sudo systemctl start docker
 sudo docker swarm join --token SWMTKN-1-0wecnrittwmr862fzm9h54aoipv24egam1ap5wsbbw34hvl0k7-07lm7ktxvhy5r6xq15mydyjxp 10.0.12.137:2377
 ```
 
-**ที่เครื่อง `10.0.10.73` (worker node2)**
+**ที่เครื่อง `10.0.10.73` (worker node-3)**
 1. Install Docker
 
 ```bash
@@ -101,14 +101,14 @@ sudo docker swarm join --token SWMTKN-1-0wecnrittwmr862fzm9h54aoipv24egam1ap5wsb
 
 เสร็จแล้วกลับไปที่ master node เพื่อดูสถานะของ cluster ที่เราเพิ่งสร้าง
 
-**ที่เครื่อง `10.0.12.137` (manager node)**
+**ที่เครื่อง `10.0.12.137` (node-1)**
 
 ```bash
 [ec2-user@ip-10-0-12-137 ~]$ sudo docker node ls
 ID                            HOSTNAME                                         STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
-lc1sjgj9e94wah0rpvtenzwqx     ip-10-0-9-198.ap-southeast-1.compute.internal    Ready     Active                          26.1.4
-2yd6b27g1n0jhcsrgeq16qzan     ip-10-0-10-73.ap-southeast-1.compute.internal    Ready     Active                          26.1.4
-hw5dhqf842lkookic1lpt7z4y *   ip-10-0-12-137.ap-southeast-1.compute.internal   Ready     Active         Leader           26.1.4
+lc1sjgj9e94wah0rpvtenzwqx     node-3                                            Ready    Active                          26.1.4
+2yd6b27g1n0jhcsrgeq16qzan     node-2                                            Ready    Active                          26.1.4
+hw5dhqf842lkookic1lpt7z4y *   node-1                                            Ready    Active         Leader           26.1.4
 ```
 
 ตอนนี้เราได้ Docker Swarm cluster ไว้ใช้งานแล้ว
@@ -124,7 +124,7 @@ sudo docker service create --name web --replicas 3 --publish published=80,target
 ลอง list service ดูด้วยคำสั้ง
 
 ```bash
-[ec2-user@ip-10-0-12-137 ~]$ sudo docker service ls
+[ec2-user@node-1 ~]$ sudo docker service ls
 ID             NAME      MODE         REPLICAS   IMAGE          PORTS
 zi2xd9yvuimr   web       replicated   3/3        nginx:latest   *:80->80/tcp
 ```
@@ -132,7 +132,7 @@ zi2xd9yvuimr   web       replicated   3/3        nginx:latest   *:80->80/tcp
 ทดลองเรียก service
 
 ```bash
-[ec2-user@ip-10-0-12-137 ~]$ curl 10.0.12.137
+[ec2-user@node-1 ~]$ curl 10.0.12.137
 <!DOCTYPE html>
 <html>
 <head>
@@ -159,3 +159,12 @@ Commercial support is available at
 ```
 
 service up and running :smiley:
+
+# Promote node เป็น manager (Optional)
+
+เราสามารถ promote node เป็น manager (เพื่อที่จะให้เราสามารถรันคำสั่งที่ใช้จัดการเกี่ยวกับ cluster ในหลายๆ node) ได้ด้วยคำสั้ง (สามารถให้ทุก node ใน cluster เป็น manager role ได้)
+
+```bash
+[ec2-user@node-2 ~]$ sudo docker node promote node-2
+Node node-2 promoted to a manager in the swarm.
+```
