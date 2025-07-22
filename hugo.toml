@@ -1,6 +1,6 @@
 baseURL = 'https://blog.abc-tech.co/'
 languageCode = 'en-us'
-title = 'Songpon Blog'
+title = 'abc-tech Blog'
 theme = 'archie'
 enableEmoji = true
 
